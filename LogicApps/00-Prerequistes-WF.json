@@ -1,0 +1,230 @@
+{
+    "definition": {
+        "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+        "actions": {
+            "foreach": {
+                "actions": {
+                    "Condition": {
+                        "actions": {},
+                        "else": {
+                            "actions": {
+                                "createtable": {
+                                    "inputs": {
+                                        "body": "@{item()}",
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                            }
+                                        },
+                                        "method": "post",
+                                        "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/tables"
+                                    },
+                                    "type": "ApiConnection"
+                                },
+                                "delay": {
+                                    "inputs": {
+                                        "interval": {
+                                            "count": 10,
+                                            "unit": "Second"
+                                        }
+                                    },
+                                    "runAfter": {
+                                        "createtable": [
+                                            "Succeeded",
+                                            "Failed"
+                                        ]
+                                    },
+                                    "type": "Wait"
+                                }
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@actions('checktable').outputs.statusCode",
+                                        200
+                                    ]
+                                }
+                            ]
+                        },
+                        "runAfter": {
+                            "checktable": [
+                                "Succeeded",
+                                "Failed"
+                            ]
+                        },
+                        "type": "If"
+                    },
+                    "checktable": {
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/tables/@{encodeURIComponent(item())}"
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "foreach": "@variables('tables')",
+                "runAfter": {
+                    "inittables": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "foreachsolution": {
+                "actions": {
+                    "checkappconfig": {
+                        "actions": {},
+                        "else": {
+                            "actions": {
+                                "addsolution": {
+                                    "inputs": {
+                                        "body": {
+                                            "Value": "@{items('foreachsolution')?['value']}"
+                                        },
+                                        "host": {
+                                            "connection": {
+                                                "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                            }
+                                        },
+                                        "method": "patch",
+                                        "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/tables/@{encodeURIComponent('solutionConfig')}/entities(PartitionKey='@{encodeURIComponent(items('foreachsolution')?['solution'])}',RowKey='@{encodeURIComponent('config')}')"
+                                    },
+                                    "type": "ApiConnection"
+                                }
+                            }
+                        },
+                        "expression": {
+                            "and": [
+                                {
+                                    "equals": [
+                                        "@actions('checksolution').outputs.statusCode",
+                                        200
+                                    ]
+                                }
+                            ]
+                        },
+                        "runAfter": {
+                            "checksolution": [
+                                "Succeeded",
+                                "Failed"
+                            ]
+                        },
+                        "type": "If"
+                    },
+                    "checksolution": {
+                        "inputs": {
+                            "host": {
+                                "connection": {
+                                    "name": "@parameters('$connections')['azuretables']['connectionId']"
+                                }
+                            },
+                            "method": "get",
+                            "path": "/v2/storageAccounts/@{encodeURIComponent(encodeURIComponent('AccountNameFromSettings'))}/tables/@{encodeURIComponent('solutionConfig')}/entities(PartitionKey='@{encodeURIComponent(items('foreachsolution')?['solution'])}',RowKey='@{encodeURIComponent('config')}')"
+                        },
+                        "type": "ApiConnection"
+                    }
+                },
+                "foreach": "@variables('config')",
+                "runAfter": {
+                    "initconfig": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "Foreach"
+            },
+            "initconfig": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "config",
+                            "type": "array",
+                            "value": [
+                                {
+                                    "solution": "app",
+                                    "value": "{ \"clientId\": \"<yourappid>\", \"tenantId\": \"<yourtenantid>\", \"secret\": \"<SeeKeyVault>\" }"
+                                },
+                                {
+                                    "solution": "01",
+                                    "value": "{ \"tablelabels\": \"Labels\", \"tablegroups\": \"Groups\", \"tablelog\": \"Log\",  \"adminEmail\": \"<admin1@mycompany.onmicrosoft.com>\", \"debug\": true }"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "foreach": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "initresult": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "result",
+                            "type": "string",
+                            "value": "GT365: The prerequisites have been done.\n\nTables:\n@{join(variables('tables'),'<br>')}\n\nConfig:\n@{join(variables('config'),'<br>')}\n\n00-prerequisites done.\nConfigure the API connections now!\n"
+                        }
+                    ]
+                },
+                "runAfter": {
+                    "foreachsolution": [
+                        "Succeeded"
+                    ]
+                },
+                "type": "InitializeVariable"
+            },
+            "inittables": {
+                "inputs": {
+                    "variables": [
+                        {
+                            "name": "tables",
+                            "type": "array",
+                            "value": [
+                                "solutionConfig",
+                                "Groups",
+                                "Labels",
+                                "Log"
+                            ]
+                        }
+                    ]
+                },
+                "runAfter": {},
+                "type": "InitializeVariable"
+            }
+        },
+        "contentVersion": "1.0.0.0",
+        "outputs": {},
+        "parameters": {
+            "$connections": {
+                "defaultValue": {},
+                "type": "Object"
+            }
+        },
+        "triggers": {
+            "manual": {
+                "kind": "Http",
+                "type": "Request"
+            }
+        }
+    },
+    "parameters": {
+        "$connections": {
+            "value": {
+                "azuretables": {
+                    "connectionId": "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/RG-SensitivityLabels/providers/Microsoft.Web/connections/azuretables",
+                    "connectionName": "azuretables",
+                    "id": "/subscriptions/00000000-0000-0000-0000-000000000000/providers/Microsoft.Web/locations/westeurope/managedApis/azuretables"
+                }
+            }
+        }
+    }
+}

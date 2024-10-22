@@ -4,6 +4,27 @@ Currently application permissions aren’t supported when updating assigned labe
 
 These samples are Azure Logic Apps that use the Microsoft Graph to work with sensitivity labels in Microsoft 365. The Logic Apps are triggered by HTTP requests and use the Graph to get and assign sensitivity labels to Microsoft Teams and SharePoint sites. 
 
+## Azure resources
+
+The Logic Apps use the following Azure resources:
+- Azure Storage Account: To store the labels and the Teams and Sites information.
+- Azure Key Vault: To store the Graph credentials.
+- Entra ID App: To authenticate the Logic App with the Graph.
+- Azure Logic Apps: To run the flows.
+- Service Account: To connect the Logic Apps actions with M365 resources
+
+## Deploy
+
+To deploy the samples, use the "Deploy from a custom template" function in your Azure portal at [https://portal.azure.com/#create/Microsoft.Template](https://portal.azure.com/#create/Microsoft.Template) and copy the ARM templates into the text field at "Build your own template in the editor". Do this for the two files in the Deploy folder:
+
+- [00-Deploy-Prerequisites.json](./Deploy/00-Deploy-Prerequisites.json): This template creates all required API connections and resources for the samples.
+- Authorize the API connections when deployed.
+- [01-Deploy-SensitivityLabels.json](./Deploy/01-Deploy-SensitivityLabels.json): This template creates the Logic Apps 01 to 05 for testing.
+
+## Logic Apps
+
+You can check out the Azure Logic App without deployment in the folder [LogicApps](./LogicApps).
+
 ## Graph and SharePoint API requests
 
 Basically the flows here do the following:
@@ -83,11 +104,4 @@ https://tpe5.sharepoint.com/sites/VivaHome/_api/site
 }
 ~~~
 
-## Azure resources
-
-The Logic Apps use the following Azure resources:
-- Azure Storage Account: To store the labels and the Teams and Sites information.
-- Azure Key Vault: To store the Graph credentials.
-- Entra ID App: To authenticate the Logic App with the Graph.
-- Azure Logic Apps: To run the flows.
-- Service Account: To connect the Logic Apps actions with M365 resources
+Happy testing!

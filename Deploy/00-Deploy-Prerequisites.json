@@ -1,0 +1,722 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.30.23.60470",
+      "templateHash": "5446540341213262393"
+    }
+  },
+  "variables": {
+    "varlocation": "[resourceGroup().location]",
+    "varUAMIname": "[substring(format('UAMI{0}', uniqueString(resourceGroup().name, subscription().id)), 0, 14)]",
+    "Workflowname": "00-Prerequisites",
+    "uniquename": "[substring(format('GT365{0}', uniqueString(resourceGroup().name, subscription().id)), 0, 15)]",
+    "varstorageaccountname": "[toLower(variables('uniquename'))]",
+    "varkeyvaultname": "[toLower(variables('uniquename'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "[variables('varUAMIname')]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[variables('varlocation')]"
+          },
+          "name": {
+            "value": "[variables('varUAMIname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "11982386693650789895"
+            }
+          },
+          "parameters": {
+            "name": {
+              "type": "string"
+            },
+            "location": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+              "apiVersion": "2023-01-31",
+              "name": "[parameters('name')]",
+              "location": "[parameters('location')]"
+            }
+          ],
+          "outputs": {
+            "objectid": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name'))]"
+            },
+            "principalid": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', parameters('name')), '2023-01-31').principalId]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "StorageAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "azuretables"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          },
+          "storageaccountname": {
+            "value": "[variables('varstorageaccountname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "17677840781477620708"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            },
+            "storageaccountname": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/azuretables', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "OfficeAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "office365"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "4113823820340428413"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/office365', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "KeyVault",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[variables('varlocation')]"
+          },
+          "Userid": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', variables('varUAMIname')), '2022-09-01').outputs.principalid.value]"
+          },
+          "tenantId": {
+            "value": "[tenant().tenantId]"
+          },
+          "vaultName": {
+            "value": "[variables('varkeyvaultname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "11319061880026558432"
+            }
+          },
+          "parameters": {
+            "vaultName": {
+              "type": "string",
+              "metadata": {
+                "description": "The name of the key vault to be created."
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "The location of the resources"
+              }
+            },
+            "tenantId": {
+              "type": "string"
+            },
+            "Userid": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.KeyVault/vaults",
+              "apiVersion": "2019-09-01",
+              "name": "[parameters('vaultName')]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "enabledForDeployment": true,
+                "enabledForTemplateDeployment": true,
+                "enabledForDiskEncryption": true,
+                "tenantId": "[parameters('tenantId')]",
+                "enableRbacAuthorization": true,
+                "sku": {
+                  "name": "standard",
+                  "family": "A"
+                }
+              }
+            },
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "name": "[guid(resourceId('Microsoft.KeyVault/vaults', parameters('vaultName')), parameters('Userid'), 'KeyVaultSecretsUser')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '4633458b-17de-408a-b874-0445c86b69e6')]",
+                "principalId": "[parameters('Userid')]",
+                "principalType": "ServicePrincipal"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+              ]
+            },
+            {
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2024-04-01-preview",
+              "name": "[format('{0}/{1}', parameters('vaultName'), 'secret')]",
+              "properties": {
+                "value": "Insert your app secret here"
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.KeyVault/vaults', parameters('vaultName'))]"
+              ]
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', variables('varUAMIname'))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "OfficeUsersAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "office365users"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "18166436776353028712"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/office365users', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "SharepointAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "sharepointonline"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "17899679842329949363"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/sharepointonline', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "KeyVaultAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "keyvault"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          },
+          "vaultName": {
+            "value": "[variables('varkeyvaultname')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "1994503721037333046"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            },
+            "vaultName": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/keyVault', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                },
+                "parameterValueSet": {
+                  "name": "oauthMI",
+                  "values": {
+                    "vaultName": {
+                      "value": "[parameters('vaultName')]"
+                    }
+                  }
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "AzureMonitorLogsAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "azuremonitorlogs"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "7785048683854553920"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/azuremonitorlogs', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                },
+                "parameterValueSet": {
+                  "name": "managedIdentityAuth",
+                  "values": {}
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2022-09-01",
+      "name": "OfficeGroupsAPIConnection",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "apiconnectionname": {
+            "value": "office365groups"
+          },
+          "location": {
+            "value": "[variables('varlocation')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.30.23.60470",
+              "templateHash": "11560792784129242425"
+            }
+          },
+          "parameters": {
+            "apiconnectionname": {
+              "type": "string",
+              "metadata": {
+                "description": "Name of the api connection"
+              }
+            },
+            "location": {
+              "type": "string",
+              "defaultValue": "[resourceGroup().location]",
+              "metadata": {
+                "description": "Location to deploy to - defaults to resource group location"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/connections",
+              "apiVersion": "2016-06-01",
+              "name": "[parameters('apiconnectionname')]",
+              "location": "[parameters('location')]",
+              "tags": {
+                "Application Description": "GT365",
+                "Application Name": "GT365"
+              },
+              "properties": {
+                "displayName": "[parameters('apiconnectionname')]",
+                "statuses": [
+                  {
+                    "status": "Ready"
+                  }
+                ],
+                "api": {
+                  "name": "[parameters('apiconnectionname')]",
+                  "displayName": "[parameters('apiconnectionname')]",
+                  "id": "[format('{0}/providers/Microsoft.Web/locations/{1}/managedApis/office365groups', subscription().id, parameters('location'))]",
+                  "type": "Microsoft.Web/locations/managedApis"
+                }
+              },
+              "metadata": {
+                "description": "API connection"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
